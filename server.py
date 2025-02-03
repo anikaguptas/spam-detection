@@ -11,7 +11,9 @@ CORS(app)
 mnb_model = joblib.load('mnb_model.pkl')  
 cv = joblib.load('cv_model.pkl')
 
-
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({'message': 'Spam Detection API is running!. Msg from Anika'}), 200
  
 # Define a route for checking spam
 @app.route('/check_spam', methods=['POST'])
