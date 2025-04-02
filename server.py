@@ -15,7 +15,8 @@ nltk.download('wordnet')
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
 
 # Load the trained model and vectorizer once (avoids reloading per request)
 mnb_model = joblib.load('mnb_model.pkl')
