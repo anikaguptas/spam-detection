@@ -3,10 +3,19 @@ from flask_cors import CORS
 import joblib
 import re
 import string
+import requests
 from bs4 import BeautifulSoup
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
+import json
+import urllib.parse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load environment variables from .env
+
+ipqs_key = os.getenv('IPQS_API_KEY')
 
 # Ensure NLTK resources are downloaded only ONCE during setup
 nltk.download('stopwords')
@@ -61,6 +70,34 @@ def check_spam():
         return jsonify({'prediction': int(prediction[0])})
 
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+class IPQS:
+    key = ipqs_key
+
+    def malicious_url_scanner_api(self, url: str, params: dict = {}) -> dict:
+        scan_url = f'https://www.ipqualityscore.com/api/json/url/{self.key}/{urllib.parse.quote_plus(url)}'
+        print(f"🛰️ Calling IPQS API: {scan_url}")
+        response = requests.get(scan_url, params=params)
+        print(f"🔧 IPQS Status: {response.status_code}")
+        return response.json()
+
+@app.route('/check_url', methods=['POST'])
+def check_url():
+    try:
+        data = request.get_json()
+        url = data.get('url', '')
+        if not url:
+            return jsonify({'error': 'URL is required.'}), 400
+
+        print(f"🔍 Scanning direct URL: {url}")
+        ipqs = IPQS()
+        result = ipqs.malicious_url_scanner_api(url, {'strictness': 0})
+        print(f"📦 IPQS Direct Response:\n{json.dumps(result, indent=2)}")
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"❌ Error in /check_url: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
